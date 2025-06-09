@@ -48,9 +48,6 @@ app.post('/api/formulario', upload.single('archivo'), async (req, res) => {
     version,
     detalle,
     contacto,
-    prioridad,
-    fecha,
-    captcha
   } = req.body;
 
   const file = req.file;
@@ -83,9 +80,6 @@ app.post('/api/formulario', upload.single('archivo'), async (req, res) => {
       <p><strong>Versión:</strong> ${version}</p>
       <p><strong>Detalle:</strong><br>${detalle}</p>
       <p><strong>Contacto:</strong> ${contacto}</p>
-      <p><strong>Prioridad:</strong> ${prioridad}</p>
-      <p><strong>Fecha:</strong> ${fecha}</p>
-      <p><strong>Captcha marcado:</strong> ${captcha ? 'Sí' : 'No'}</p>
     `,
     attachments: file
       ? [
