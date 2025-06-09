@@ -27,7 +27,7 @@ function generarCodigoRequerimiento() {
   const mes = String(fecha.getMonth() + 1).padStart(2, '0'); 
   const anio = String(fecha.getFullYear()).slice(-2);
 
-  const fechaStr = `${dia}${mes}${anio}`;
+  const fechaStr = `${anio}${mes}${dia}`;
 
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let codigo = "";
