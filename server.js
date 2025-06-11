@@ -130,7 +130,7 @@ app.post('/api/contacto', upload.single('archivo'), async (req, res) => {
   const mailOptions = {
     from: `"Contacto Web" <${process.env.SMTP_FROM}>`,
     to: process.env.SMTP_TO,
-    subject: `Nuevo mensaje de contacto: ${asunto} (Código: ${codigoContacto})`,
+    subject: `Nuevo mensaje de contacto: ${asunto}`,
     html: `
       <h2>Nuevo mensaje desde el formulario de contacto</h2>
       <p><strong>Código:</strong> ${codigoContacto}</p>
