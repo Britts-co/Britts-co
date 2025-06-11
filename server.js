@@ -109,3 +109,49 @@ app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
 
+// Formulario de contacto
+
+app.post('/api/contacto', upload.single('archivo'), async (req, res) => {
+  const { nombre, email, asunto, mensaje } = req.body;
+  const file = req.file;
+
+  const codigoContacto = generarCodigoRequerimiento(); // puedes cambiar el prefijo si quieres
+
+  const transporter = nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASS
+    }
+  });
+
+  const mailOptions = {
+    from: `"Contacto Web" <${process.env.SMTP_FROM}>`,
+    to: process.env.SMTP_TO,
+    subject: `Nuevo mensaje de contacto: ${asunto} (Código: ${codigoContacto})`,
+    html: `
+      <h2>Nuevo mensaje desde el formulario de contacto</h2>
+      <p><strong>Código:</strong> ${codigoContacto}</p>
+      <p><strong>Nombre:</strong> ${nombre}</p>
+      <p><strong>Correo:</strong> ${email}</p>
+      <p><strong>Asunto:</strong> ${asunto}</p>
+      <p><strong>Mensaje:</strong><br>${mensaje}</p>
+    `,
+    attachments: file
+      ? [{
+          filename: file.originalname,
+          path: file.path
+        }]
+      : []
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    res.status(200).json({ message: 'Mensaje enviado correctamente.', codigo: codigoContacto });
+  } catch (error) {
+    console.error('Error al enviar contacto:', error);
+    res.status(500).json({ message: 'Error al enviar el mensaje.' });
+  }
+});
