@@ -113,7 +113,7 @@ app.listen(PORT, () => {
 
 app.post('/api/contacto', upload.single('archivo'), async (req, res) => {
   const { nombre, email, asunto, mensaje } = req.body;
-  const file = req.file;
+
 
   const codigoContacto = generarCodigoRequerimiento(); // puedes cambiar el prefijo si quieres
 
@@ -139,12 +139,6 @@ app.post('/api/contacto', upload.single('archivo'), async (req, res) => {
       <p><strong>Asunto:</strong> ${asunto}</p>
       <p><strong>Mensaje:</strong><br>${mensaje}</p>
     `,
-    attachments: file
-      ? [{
-          filename: file.originalname,
-          path: file.path
-        }]
-      : []
   };
 
   try {
