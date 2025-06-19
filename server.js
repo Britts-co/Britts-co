@@ -133,7 +133,6 @@ app.post('/api/contacto', upload.single('archivo'), async (req, res) => {
     subject: `Nuevo mensaje de contacto: ${asunto}`,
     html: `
       <h2>Nuevo mensaje desde el formulario de contacto</h2>
-      <p><strong>Código:</strong> ${codigoContacto}</p>
       <p><strong>Nombre:</strong> ${nombre}</p>
       <p><strong>Correo:</strong> ${email}</p>
       <p><strong>Asunto:</strong> ${asunto}</p>
