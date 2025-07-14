@@ -148,3 +148,45 @@ app.post('/api/contacto', upload.single('archivo'), async (req, res) => {
     res.status(500).json({ message: 'Error al enviar el mensaje.' });
   }
 });
+
+const db = require('./db');
+// Ruta de descargas
+const descargasRoute = require('./descargas');
+app.use('/', descargasRoute);
+
+app.get('/api/dbw00001', (req, res) => {
+  db.query('SELECT * FROM DBW00001', (err, results) => {
+    if (err) {
+      console.error('❌ Error:', err);  // muestra error completo
+      return res.status(500).json({ error: 'Error consultando la base de datos' });
+    }
+    console.log('✅ Resultados:', results);  // muestra datos obtenidos
+    res.json(results);
+  });
+});
+
+const { verificarLogin } = require('./login'); // Asegúrate que login.js esté en la raíz o ajusta el path
+
+app.post('/api/login', (req, res) => {
+  const { usuario, contrasena } = req.body;
+
+  if (!usuario || !contrasena) {
+    return res.status(400).json({ success: false, error: 'Usuario y contraseña son obligatorios' });
+  }
+
+  const resultado = verificarLogin(usuario, contrasena);
+
+  if (resultado.success) {
+    return res.status(200).json({
+      success: true,
+      codigo: resultado.codigo,
+      nombre: resultado.nombre,
+    });
+  } else {
+    return res.status(401).json({ success: false, error: resultado.error });
+  }
+});
+
+
+
+
