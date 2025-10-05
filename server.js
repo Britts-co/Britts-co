@@ -109,6 +109,11 @@ app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
 
+const requerimientosdb = require('./requerimientosdb');
+app.use('/api/requerimientosdb', requerimientosdb);
+
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Formulario de contacto
 
 app.post('/api/contacto', upload.single('archivo'), async (req, res) => {
