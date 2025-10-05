@@ -90,7 +90,8 @@ router.post('/', upload.single('archivo'), (req, res) => {
       console.log(`✅ Requerimiento ${requerimiento} registrado correctamente.`);
       res.status(200).json({
         success: true,
-        mensaje: `Requerimiento ${requerimiento} enviado correctamente.`
+        mensaje: `Requerimiento ${requerimiento} enviado correctamente.`,
+        codigo: requerimiento  // 👈 Esto es clave
       });
     });
 
