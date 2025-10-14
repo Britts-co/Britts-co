@@ -62,10 +62,10 @@ router.post('/', upload.single('archivo'), (req, res) => {
     const archivoRuta = req.file ? req.file.path : null;
 
     const sql = `
-      INSERT INTO DBW00002 s
+      INSERT INTO DBW00002
       (Requerimiento, Correo, Asunto, Tipo, Solucion, Programa, Version, Detalle, Contacto)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `;
+    `; // Estado usa default de la tabla
 
     console.log('📤 Insertando requerimiento:', {
       requerimiento, email, asunto, tipo, solucion, programa, version, detalle, contacto
