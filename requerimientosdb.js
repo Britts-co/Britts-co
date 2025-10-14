@@ -62,8 +62,8 @@ router.post('/', upload.single('archivo'), (req, res) => {
     const archivoRuta = req.file ? req.file.path : null;
 
     const sql = `
-      INSERT INTO DBW00002 
-      (Requerimiento, Correo, Asunto, Tipo, \`Solución\`, Programa, Version, Detalle, Contacto)
+      INSERT INTO DBW00002 s
+      (Requerimiento, Correo, Asunto, Tipo, Solucion, Programa, Version, Detalle, Contacto)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
@@ -102,7 +102,7 @@ router.post('/', upload.single('archivo'), (req, res) => {
 });
 
 // === GET /api/requerimientosdb y /api/requerimientosdb/:codigo ===
-// Listar requerimientos (todos o filtrados por solución)
+
 router.get(['/', '/:codigo'], (req, res) => {
   const codigo = req.params.codigo || null;
 
@@ -112,22 +112,23 @@ router.get(['/', '/:codigo'], (req, res) => {
       Correo,
       Asunto,
       Tipo,
-      \`Solución\` AS Solucion,
+      Solucion,
       Programa,
       Version,
       Detalle,
-      Contacto
+  Contacto,
+  Estado
     FROM DBW00002
   `;
 
   const params = [];
 
   if (codigo) {
-    sql += ' WHERE `Solución` = ?';
+    sql += ' WHERE Solucion = ?';
     params.push(codigo);
   }
 
-  sql += ' ORDER BY \`Solución\`, Requerimiento DESC';
+  sql += ' ORDER BY Solucion, Requerimiento DESC';
 
   console.log('📡 Ejecutando consulta:', sql, params);
 
@@ -152,7 +153,8 @@ router.get(['/', '/:codigo'], (req, res) => {
         programa: row.Programa,
         version: row.Version,
         detalle: row.Detalle,
-        contacto: row.Contacto
+  contacto: row.Contacto,
+  estado: row.Estado
       });
     });
 
