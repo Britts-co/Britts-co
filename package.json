@@ -4,8 +4,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-  "start": "node server.js",
-  "migrate:anuncios": "node scripts/migrate-anuncios-targeting.js"
+    "start": "node server.js",
+    "migrate:anuncios": "node scripts/migrate-anuncios-targeting.js"
   },
   "keywords": [],
   "author": "",
