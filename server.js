@@ -6,6 +6,8 @@ const cors = require('cors');
 const path = require('path');
 
 const app = express();
+
+// --- CORS CONFIGURADO CORRECTAMENTE ---
 app.use(cors({
   origin: [
     'https://brittsco.com',
@@ -13,10 +15,8 @@ app.use(cors({
     'http://localhost:3000'
   ],
   methods: ['GET', 'POST'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
 }));
-app.options('*', cors());
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
