@@ -159,6 +159,10 @@ const db = require('./db');
 const descargasRoute = require('./descargas');
 app.use('/', descargasRoute);
 
+// 📣 Anuncios (banner superior)
+const anuncios = require('./anuncios');
+app.use('/api/anuncios', anuncios);
+
 app.get('/api/dbw00001', (req, res) => {
   db.query('SELECT * FROM DBW00001', (err, results) => {
     if (err) {

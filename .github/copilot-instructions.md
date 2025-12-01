@@ -6,12 +6,21 @@ Purpose: Fast orientation for AI agents contributing to this Node.js Express + M
 - Entry point: `server.js` sets up Express 5, JSON/urlencoded parsing, CORS, Multer for uploads, and mounts feature routers.
 - Routers / features:
   - Form + contact email handling (inline in `server.js`) using `nodemailer` with SMTP env vars (`SMTP_HOST`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`, `SMTP_TO`).
-  - Requerimientos API: mounted at `/api/requerimientosdb` from `requerimientosdb.js` (CRUD-like: currently POST create, GET list/group). Persists into MySQL table `DBW00002` with columns: `Requerimiento, Correo, Asunto, Tipo, Solución, Programa, Version, Detalle, Contacto`.
+  - Requerimientos API: mounted at `/api/requerimientosdb` from `requerimientosdb.js` (POST create, GET list/group). Persists into MySQL table `DBW00002` with columns: `Requerimiento, Correo, Asunto, Tipo, Solucion, Programa, Version, Detalle, Contacto, Estado` (Estado CHAR(1) default 'R'). GET groups by `Solucion` and returns `estado` in items.
   - Descargas API: `descargas.js` mounted at root; endpoint `/descargas/:codigo` queries table `DBW00001` returning grouped solution assets (fields aliased: solucion, nombre, imagen, programa, manual).
+  - Anuncios API: mounted at `/api/anuncios` from `anuncios.js`. Uses table `DBW00003` for site banner announcements.
+    - GET `/api/anuncios/activo` → returns the most recently updated active row within time window, or 204 when none.
+    - GET `/api/anuncios` → list ordered by `updated_at` desc.
+    - POST `/api/anuncios` and PATCH `/api/anuncios/:id` → basic JSON admin endpoints (no auth yet).
   - Login: POST `/api/login` uses in‑memory user definitions in `login.js` whose credentials resolve from environment variables (`USER_*`, `PASS_*`). Returns `{success,codigo,nombre}`.
 - Database access centralized in `db.js` via a MySQL connection pool and exported `query(sql, params, cb)` wrapper adding verbose logging and always releasing connections.
 - File uploads: Multer disk storage. General form uploads go to `uploads/`. Requerimientos file uploads go to `uploads/requerimientos` (directory auto-created if missing). Filtration allows only `.jpg,.jpeg,.png,.pdf` for requerimientos.
-- Generated codes: `generarCodigoRequerimiento()` pattern: `BRTYYMMDDXXX` where XXX = 3 random alphanumeric chars. Appears in multiple modules; consider refactor to a util to avoid duplication.
+- Generated codes: `generarCodigoRequerimiento()` pattern: `BRTYYMMDDXXX` appears in multiple modules—prefer a shared util if reused.
+## Frontend integration notes
+- Static site pages call this API from JS. Notable integrations:
+  - Contacto: POST `FormData` to `/api/contacto`; expects `{ message }`.
+  - Requerimientos: POST `FormData` to `/api/formulario`; expects `{ message, codigo }`.
+  - Banner: Frontend fetches `/api/anuncios/activo`; expects 200 JSON `{ id, activo, tipo, titulo?, mensaje, link_url?, dismissible }` or 204 No Content.
 
 ## Conventions & Patterns
 - Spanish field and variable naming (e.g., `solucion`, `requerimiento`, `detalle`). Keep naming consistent; do not anglicize existing API fields.
@@ -34,39 +43,44 @@ PORT (optional)
 
 Example skeleton:
 ```js
-// nuevoRecurso.js
-const express = require('express');
-const router = express.Router();
-const db = require('./db');
+# Copilot Instructions (backend + frontend contract)
 
-router.get('/', (req,res)=>{
-  db.query('SELECT * FROM NUEVA_TABLA', [], (err, rows)=>{
-    if (err) return res.status(500).json({ error: 'Error consultando' });
-    res.json(rows);
-  });
-});
-module.exports = router;
-// in server.js
-app.use('/api/nuevo-recurso', require('./nuevoRecurso'));
-```
+Purpose: Quick orientation for AI agents working on this Node.js Express + MySQL API and the static frontend that consumes it.
 
-## Build & Run
-- Install: `npm install`
-- Start (dev/prod): `npm start` (runs `node server.js`). No nodemon configured; add it if hot reload needed.
-- Tests: none defined; if adding, keep scripts non-breaking (replace placeholder `test` script when real tests are introduced).
+## Architecture
+- Entry: `server.js` (Express 5, CORS, JSON/urlencoded, Multer `uploads/`).
+- Routers/features:
+  - Requerimientos DB API: `app.use('/api/requerimientosdb', require('./requerimientosdb'))` → table `DBW00002` (cols: Requerimiento, Correo, Asunto, Tipo, Solucion, Programa, Version, Detalle, Contacto, Estado CHAR(1) default 'R'). GET groups by `Solucion` and includes `estado`.
+  - Formulario/Contacto emails: inline in `server.js` with Nodemailer (SMTP envs).
+  - Descargas: `app.use('/', require('./descargas'))` → `GET /descargas/:codigo` (groups by `solucion`) from `DBW00001`.
+  - Anuncios (banner): `app.use('/api/anuncios', require('./anuncios'))` → table `DBW00003`.
 
-## Safety & Error Handling
-- Always release DB connections (handled by pool wrapper). Do not bypass `db.query` unless adding async/Promise variant.
-- Keep file type validation when expanding upload support; avoid saving arbitrary executables.
-- Do not log sensitive env values; current logging keeps them out—preserve that.
+## Frontend integration
+- Static pages at repo root; CSS in `css/`, JS in `javascript/`.
+- Requerimientos: pages use `#loader-overlay`, form `#formularioRequerimiento`; JS posts `FormData` to `POST /api/requerimientosdb` and shows `{ codigo }` in `#codigoRequerimiento` / success in `#mensajeExito`.
+- Contacto: `POST /api/contacto` with `FormData { nombre, email, asunto, mensaje }` → expects `{ message }`.
+- Announcements banner: `GET /api/anuncios/activo` → 200 `{ id, activo, tipo: 'info'|'success'|'warning'|'danger', titulo?, mensaje, link_url?, dismissible }` or 204 (no body). Per‑page opt‑out supported via meta/body/window flags in frontend.
+ - Announcements banner: `GET /api/anuncios/activo` → 200 `{ id, activo, tipo, titulo?, mensaje, link_url?, dismissible, starts_at, ends_at, include_pages?, exclude_pages? }` or 204. Per‑page opt‑out supported (meta/body/window flags). Targeting rules: if `include_pages` is non‑empty, show only on those filenames; otherwise, hide on any in `exclude_pages`.
 
-## Refactor Opportunities (incremental, not required)
-- Extract duplicated code generator to `util/codigo.js`.
-- Implement Promise-based `queryAsync` for cleaner async/await flows.
-- Centralize email transporter creation to avoid duplication between form and contacto routes.
+## API contracts (summary)
+- POST `/api/requerimientosdb` ← FormData `{ email, asunto, tipo, solucion, programa, version, detalle, contacto }` → `{ success, mensaje, codigo }`. INSERT omits `Estado` to use default 'R'.
+- GET  `/api/requerimientosdb` → object grouped by `Solucion`, items include `estado`.
+- POST `/api/contacto` ← FormData → `{ message }`.
+- GET  `/api/anuncios/activo` → active banner or 204; GET `/api/anuncios` → list; POST/PATCH `/api/anuncios` → admin (no auth yet). All include/return `starts_at`, `ends_at`, `include_pages`, `exclude_pages`.
+- GET  `/descargas/:codigo` → grouped by `solucion`.
 
-## When Unsure
-Inspect existing route patterns first; mimic structure, Spanish naming, logging emojis, and response JSON shapes.
+## Conventions
+- Spanish naming for fields/JSON. Keep response shapes stable.
+- Logging with emojis: 📦 pool, 🔌 connection, 📤 insert/📡 query, ✅ ok, ❌ error.
+- Multer uploads: `uploads/` and `uploads/requerimientos`; only `.jpg,.jpeg,.png,.pdf` allowed for requerimientos.
+- Code generator: `generarCodigoRequerimiento()` → `BRTYYMMDDXXX` (consider shared util if reused).
 
----
-Provide PRs that stay within these conventions. Ask if introducing auth changes, schema migrations, or external dependencies.
+## Env & run
+- Env: DB_HOST, DB_USER, DB_PASSWORD, DB_NAME; SMTP_HOST, SMTP_USER, SMTP_PASS, SMTP_FROM, SMTP_TO; optional `PORT`; login envs (`USER_*`/`PASS_*`) if using `login.js`.
+- Run: `npm install` then `npm start` (node server.js). Use a local web server for the static site (avoid `file://`).
+ - DB migration: `npm run migrate:anuncios` adds `include_pages`/`exclude_pages` columns to `DBW00003` (idempotent).
+
+## Safety
+- Always parameterize queries via `db.query`. Connections auto‑released.
+- Avoid table aliases in INSERT (MySQL parse error). Rely on DB defaults (e.g., `Estado` = 'R').
+- Don’t log secrets; preserve current emoji logging style.
